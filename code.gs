@@ -6,9 +6,9 @@
 
 var token = "";     // 1. FILL IN YOUR OWN TOKEN
 var telegramUrl = "https://api.telegram.org/bot" + token;
-var webAppUrl = ""; // 2. FILL IN YOUR GOOGLE WEB APP ADDRESS
-var ssId = "";      // 3. FILL IN THE ID OF YOUR SPREADSHEET
+var webAppUrl = "";      // 3. FILL IN THE ID OF YOUR SPREADSHEET
 var adminID = "";   // 4. Fill in your own Telegram ID for debugging
+var passphrase = "";  // 5. add a pass phrase so secure the rest of the world from manipulating the sheet
 
 function getMe() {
   var url = telegramUrl + "/getMe";
@@ -36,20 +36,17 @@ function doPost(e) {
   try {
     // this is where telegram works
     var data = JSON.parse(e.postData.contents);
-    var text = data.message.text;
+    var text = data.message.text.split(" ");
+    var code = text[0];
     var id = data.message.chat.id;
-    var name = data.message.chat.first_name + " " + data.message.chat.last_name;
-    var answer = "Hi " + name;
-    sendText(id,answer);
-    SpreadsheetApp.openById(ssId).getSheets()[0].appendRow([new Date(),id,name,text,answer]);
-    
-    if(/^@/.test(text)) {
-      var sheetName = text.slice(1).split(" ")[0];
-      var sheet = SpreadsheetApp.openById(ssId).getSheetByName(sheetName) ? SpreadsheetApp.openById(ssId).getSheetByName(sheetName) : SpreadsheetApp.openById(ssId).insertSheet(sheetName);
-      var newText = text.split(" ").slice(1).join(" ");
-      sheet.appendRow([new Date(),id,name,newText,answer]);
-      sendText(id,"your text '" + newText + "' is now added to the sheet '" + sheetName + "'");
+    if(code == passphrase) {  // 1. FILL IN YOUR OWN TOKEN
+        var name = data.message.chat.first_name; //+ " " + data.message.chat.last_name;
+        sendText(id, "done");
+        SpreadsheetApp.openById(ssId).getSheets()[0].appendRow([new Date(),name,...text.slice(1)]);
+    } else {
+      sendText(id, "unauthorized");
     }
+
   } catch(e) {
     sendText(adminID, JSON.stringify(e,null,4));
   }
